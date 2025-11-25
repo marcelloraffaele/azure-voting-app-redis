@@ -1,11 +1,14 @@
-name: build_deploy_aks
+name: CI/CD Pipeline
 on:
   push:
     paths:
       - "azure-vote/**"
 jobs:
   build:
+    name: CI - Build and Push
     runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.build-push-acr.outputs.image-tag }}
     steps:
       - name: Checkout source code 
         uses: actions/checkout@v3
@@ -19,10 +22,19 @@ jobs:
           tenant: ${{ secrets.tenant }}
           registry: ${{ secrets.registry }}
           repository: ${{ secrets.repository }}
-          image:  azure-vote-front
+          image: azure-vote-front
           folder: azure-vote
           branch: master
           tag: ${{ github.sha }}
+          git_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    name: CD - Deploy to AKS
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code 
+        uses: actions/checkout@v3
 
       - name: Azure login
         id: login
